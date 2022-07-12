@@ -9,15 +9,23 @@ exports.getPokemon = (req, res) => {
 };
 exports.getAllPokemon = (req, res) => {
   let listaFiltrada = listaPokemon;
-  const { tipo } = req.query;
+  const { tipo, atk } = req.query;
   if (tipo) {
-    // const [tipo1, tipo2] = tipo.split(",");
+    const tipos = tipo.split(",");
+    tipos.forEach((t) => {
+      listaFiltrada = listaFiltrada.filter(
+        (p) =>
+          p.tipo.toLowerCase() === t.toLowerCase() ||
+          p.tipoDos?.toLowerCase() === t.toLowerCase()
+      );
+    });
+  }
+  if (atk) {
     listaFiltrada = listaFiltrada.filter(
-      (p) =>
-        p.tipo.toLowerCase() === tipo.toLowerCase() ||
-        p.tipoDos?.toLowerCase() === tipo.toLowerCase()
+      (p) => parseInt(p.estadisticas.atk) > parseInt(atk)
     );
   }
+
   res.send(listaFiltrada);
 };
 
@@ -30,11 +38,28 @@ exports.postNewPokemon = (req, res) => {
 
 exports.updatePokemon = (req, res) => {
   const { nombre } = req.params;
-  const { descripcion, hp } = req.body;
+  // const { descripcion, hp } = req.body;
+  const nuevosValores = req.body;
   const posicionPokemon = listaPokemon.findIndex(
     (p) => p.nombre.toLowerCase() === nombre.toLowerCase()
   );
-  listaPokemon[posicionPokemon].descripcion = descripcion;
-  listaPokemon[posicionPokemon].estadisticas.hp = hp;
+  const pokemonActualizado = {
+    ...listaPokemon[posicionPokemon],
+    ...nuevosValores,
+  };
+  listaPokemon[posicionPokemon] = pokemonActualizado;
+  // listaPokemon[posicionPokemon].descripcion = descripcion;
+  // listaPokemon[posicionPokemon].estadisticas.hp = hp;
+  // res.send(listaPokemon[posicionPokemon]);
   res.send(listaPokemon[posicionPokemon]);
+};
+
+exports.deletePokemon = (req, res) => {
+  const { nombre } = req.params;
+  const posicionPokemon = listaPokemon.findIndex(
+    (p) => p.nombre.toLowerCase() === nombre.toLowerCase()
+  );
+  const listaNueva = listaPokemon.splice(posicionPokemon, 1);
+  // const listaFilter = listaPokemon.filter((p)=>p.nombre.toLowerCase!==listaPokemon[posicionPokemon].nombre.toLowerCase())
+  res.send(listaPokemon);
 };
