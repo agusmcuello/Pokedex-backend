@@ -1,11 +1,19 @@
 const listaPokemon = require("../models/listaPokemon");
+const jwt = require("jsonwebtoken");
 
 exports.getPokemon = (req, res) => {
   const { nombrePokemon } = req.params;
-  const pokemon = listaPokemon.find(
+  const pokemonIndex = listaPokemon.findIndex(
     (p) => p.nombre.toLowerCase() === nombrePokemon.toLowerCase()
   );
-  res.send(pokemon);
+  const pokemon = listaPokemon[pokemonIndex];
+  const next =
+    pokemonIndex !== listaPokemon.length - 1
+      ? listaPokemon[pokemonIndex + 1].nombre
+      : null;
+  const prev =
+    pokemonIndex !== 0 ? listaPokemon[pokemonIndex - 1].nombre : null;
+  res.send({ ...pokemon, next, prev });
 };
 exports.getAllPokemon = (req, res) => {
   let listaFiltrada = listaPokemon;
@@ -63,3 +71,22 @@ exports.deletePokemon = (req, res) => {
   // const listaFilter = listaPokemon.filter((p)=>p.nombre.toLowerCase!==listaPokemon[posicionPokemon].nombre.toLowerCase())
   res.send(listaPokemon);
 };
+
+const TOKEN_SECRET = "UnaClaveParaFirmarElToken";
+
+exports.verifyToken = (req, res, next) => {
+  const token = req.header("Authorization");
+  console.log(token);
+  if (!token) {
+    return res.status(401).json({ error: "acceso denegado" });
+  }
+  try {
+    const verified = jwt.verify(token, TOKEN_SECRET);
+    req.user = verified;
+    next();
+  } catch (error) {
+    res.status(400).json({ error: "el token no es válido" });
+  }
+};
+
+exports.TOKEN_SECRET = TOKEN_SECRET;

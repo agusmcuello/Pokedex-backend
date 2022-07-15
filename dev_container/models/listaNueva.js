@@ -1,4 +1,6 @@
-const listaPokemon = [
+const { REPL_MODE_SLOPPY } = require("repl");
+
+const listaNueva = [
   {
     nombre: "Bulbasaur",
     color: "#74CB48",
@@ -341,4 +343,4 @@ const listaPokemon = [
   },
 ];
 
-module.exports = listaPokemon;
+module.exports = listaNueva;
