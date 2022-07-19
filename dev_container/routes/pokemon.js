@@ -1,6 +1,12 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { Pool } = require("pg");
+const pool = new Pool({
+  user: "postgres",
+  database: "pokedex",
+  password: "8508",
+});
 const router = express.Router();
 const {
   getPokemon,
@@ -9,7 +15,7 @@ const {
   updatePokemon,
   deletePokemon,
   verifyToken,
-  TOKEN_SECRET,
+  postLogin,
 } = require("../controllers/pokemon");
 
 const usuarios = [
@@ -35,29 +41,17 @@ router.post("/register", async (req, res) => {
     password: password,
   };
 
-  usuarios.push(newUser);
-
-  res.json({ success: true, newUser, usuarios, salt });
+  try {
+    pool.query(
+      "INSERT INTO public.usuarios (nombre, mail, password) VALUES ($1, $2, $3)",
+      [newUser.name, newUser.mail, password]
+    );
+    res.json({ success: true, newUser, usuarios, salt });
+  } catch (error) {
+    res.json({ error: error });
+  }
 });
 
-router.post("/login", async (req, res) => {
-  const user = usuarios.find((u) => u.mail === req.body.mail);
-  if (!user) {
-    return res.status(400).json({ error: "usuario no encontrado" });
-  }
-  const validPassword = await bcrypt.compare(req.body.password, user.password);
-  if (!validPassword) {
-    return res.status(400).json({ error: "contraseña no válida" });
-  }
-
-  const token = jwt.sign(
-    {
-      name: user.name,
-      id: user.id,
-    },
-    TOKEN_SECRET
-  );
-  res.json({ error: null, data: "login exitoso", token });
-});
+router.post("/login", postLogin);
 
 module.exports = router;
