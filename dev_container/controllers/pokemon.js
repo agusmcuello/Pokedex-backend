@@ -3,8 +3,9 @@ const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 const pool = new Pool({
   user: "postgres",
-  database: "pokedex",
-  password: "8508",
+  database: "pokemon",
+  password: "lagatacamila",
+  port:9090,
 });
 const bcrypt = require("bcrypt");
 
@@ -97,20 +98,12 @@ exports.verifyToken = (req, res, next) => {
 };
 
 exports.postLogin = async (req, res) => {
-  // const user = usuarios.find((u) => u.mail === req.body.mail);
-  // if (!user) {
-  //   return res.status(400).json({ error: "usuario no encontrado" });
-  // }
-  // const validPassword = await bcrypt.compare(req.body.password, user.password);
-  // if (!validPassword) {
-  //   return res.status(400).json({ error: "contraseña no válida" });
-  // }
   const { rows } = await pool.query(
-    "select * from public.usuarios where mail=$1 limit 1",
+    "select * from public.usuarios where email=$1 limit 1",
     [req.body.mail]
   );
   if (!rows[0]) {
-    return res.status(400).json({ error: "mail no válida" });
+    return res.status(400).json({ error: "email no válida" });
   }
 
   const validPassword = await bcrypt.compare(

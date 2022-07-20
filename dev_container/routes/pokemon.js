@@ -4,9 +4,11 @@ const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 const pool = new Pool({
   user: "postgres",
-  database: "pokedex",
-  password: "8508",
+  database: "pokemon",
+  password: "lagatacamila",
+  port:9090,
 });
+
 const router = express.Router();
 const {
   getPokemon,
@@ -37,13 +39,13 @@ router.post("/register", async (req, res) => {
 
   const newUser = {
     name: req.body.name,
-    mail: req.body.mail,
+    mail: req.body.email,
     password: password,
   };
 
   try {
     pool.query(
-      "INSERT INTO public.usuarios (nombre, mail, password) VALUES ($1, $2, $3)",
+      "INSERT INTO public.usuarios (name, email, password) VALUES ($1, $2, $3)",
       [newUser.name, newUser.mail, password]
     );
     res.json({ success: true, newUser, usuarios, salt });
