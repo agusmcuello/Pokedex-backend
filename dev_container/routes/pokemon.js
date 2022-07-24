@@ -20,17 +20,9 @@ const {
   postLogin,
 } = require("../controllers/pokemon");
 
-const usuarios = [
-  {
-    name: "Juan",
-    mail: "juan@gmail.com",
-    password: "$2b$10$kKO2X7Hz419rDpxU7i5fH.I5BAWfxTvMjFPzU7tzGo3xibGZeX6OK",
-  },
-];
-
 router.get("/pokemon/:nombrePokemon", getPokemon);
 router.get("/pokemon", getAllPokemon);
-router.post("/agregarPokemon", verifyToken, postNewPokemon);
+router.post("/agregarPokemon", postNewPokemon);
 router.put("/modificarPokemon/:nombre", verifyToken, updatePokemon);
 router.delete("/borrarPokemon/:nombre", verifyToken, deletePokemon);
 router.post("/register", async (req, res) => {
@@ -39,7 +31,7 @@ router.post("/register", async (req, res) => {
 
   const newUser = {
     name: req.body.name,
-    mail: req.body.email,
+    mail: req.body.mail,
     password: password,
   };
 
@@ -48,7 +40,7 @@ router.post("/register", async (req, res) => {
       "INSERT INTO public.usuarios (name, email, password) VALUES ($1, $2, $3)",
       [newUser.name, newUser.mail, password]
     );
-    res.json({ success: true, newUser, usuarios, salt });
+    res.json({ success: true, newUser, salt });
   } catch (error) {
     res.json({ error: error });
   }
