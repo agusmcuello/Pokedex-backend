@@ -1,4 +1,3 @@
-const listaPokemon = require("../models/listaPokemon");
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 const pool = new Pool({
@@ -11,19 +10,22 @@ const bcrypt = require("bcrypt");
 
 exports.getPokemon = async (req, res) => {
   const { nombrePokemon } = req.params;
-  // const pokemonIndex = listaPokemon.findIndex(
-  //   (p) => p.nombre.toLowerCase() === nombrePokemon.toLowerCase()
-  // );
+
+  const { rows:listaPokemon } = await pool.query(
+    "select * from public.pokemon where pokemon.deleted = false order by pokemon.id"
+  );
   const { rows } = await pool.query(
-    `select *, pokemon.id as id from public.pokemon join public.stats on stats.pokemon_id = pokemon.id where lower(pokemon.name) = $1`,[nombrePokemon.toLowerCase()]
+    `select *, pokemon.id as id from public.pokemon join public.stats on stats.pokemon_id = pokemon.id where pokemon.deleted = false and lower(pokemon.name) = $1`,[nombrePokemon.toLowerCase()]
   );
   const pokemon = rows[0];
-
+  const pokemonIndex = listaPokemon.findIndex(
+    (pokemon) => pokemon.name.toLowerCase() === nombrePokemon.toLowerCase()
+  );
   const { rows:rowsPrev } = await pool.query(
-    `select name from public.pokemon where id=$1`, [pokemon.id-1]
+    `select name from public.pokemon where name=$1`, [listaPokemon[pokemonIndex-1]?.name]
   );
   const { rows:rowsNext } = await pool.query(
-    `select name from public.pokemon where id= $1`, [pokemon.id+1]
+    `select name from public.pokemon where name= $1`, [listaPokemon[pokemonIndex+1]?.name]
   );
   
   res.send({ ...pokemon, next: rowsNext[0]?rowsNext[0].name:null, prev: rowsPrev[0]?rowsPrev[0].name:null }); 
@@ -31,7 +33,7 @@ exports.getPokemon = async (req, res) => {
 exports.getAllPokemon = async (req, res) => {
 
   const { rows } = await pool.query(
-    "select * from public.pokemon"
+    "select * from public.pokemon where pokemon.deleted = false"
   );
   // const { tipo, atk } = req.query;
   // if (tipo) {
@@ -65,14 +67,32 @@ exports.postNewPokemon = async (req, res) => {
     first_ability:req.body.first_ability,
     second_ability:req.body.second_ability,
     description: req.body.description,
-    number:req.body.number
+    number:req.body.number,
   };
 
   try {
-    pool.query(
+   const respuesta = await pool.query(
       "INSERT INTO public.pokemon (name,color,type,type_two,type_two_color,weight,height,first_ability,second_ability,description,number) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
       [newPokemon.name, newPokemon.color, newPokemon.type, newPokemon.type_two, newPokemon.type_two_color, newPokemon.weight, newPokemon.height, newPokemon.first_ability,newPokemon.second_ability,newPokemon.description,newPokemon.number]
     );
+    const ultimoDato = await pool.query(
+      "select MAX(id) from pokemon"
+    )
+
+    const pokemonStats={
+      id: newPokemon.number,
+      hp: req.body.hp,
+      atk: req.body.atk,
+      def:req.body.def,
+      satk:req.body.satk,
+      sdef:req.body.sdef,
+      spd:req.body.spd,
+      pokemon_id:ultimoDato.rows[0].max
+    }
+    await pool.query(
+      "INSERT INTO public.stats (id, hp, atk, def, satk, sdef, spd, pokemon_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",[newPokemon.number,pokemonStats.hp,pokemonStats.atk,pokemonStats.def,pokemonStats.satk,pokemonStats.sdef,pokemonStats.spd, ultimoDato.rows[0].max]
+    )
+
   
     res.json({ success: true, newPokemon });
   } catch (error) {
@@ -98,15 +118,17 @@ exports.updatePokemon = (req, res) => {
   res.send(listaPokemon[posicionPokemon]);
 };
 
-exports.deletePokemon = (req, res) => {
+exports.deletePokemon = async (req, res) => {
   const { nombre } = req.params;
-  const posicionPokemon = listaPokemon.findIndex(
-    (p) => p.nombre.toLowerCase() === nombre.toLowerCase()
-  );
-  const listaNueva = listaPokemon.splice(posicionPokemon, 1);
-  // const listaFilter = listaPokemon.filter((p)=>p.nombre.toLowerCase!==listaPokemon[posicionPokemon].nombre.toLowerCase())
-  res.send(listaPokemon);
-};
+
+  const {rows} = await pool.query(
+    "UPDATE public.pokemon SET deleted=true WHERE pokemon.name = $1",[nombre]
+  )
+  const {rows:listaNueva} = await pool.query(
+    "select * from public.pokemon where public.pokemon.deleted=false"
+  )
+    res.send(listaNueva);
+  };
 
 const TOKEN_SECRET = "UnaClaveParaFirmarElToken";
 
