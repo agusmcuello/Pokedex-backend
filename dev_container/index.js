@@ -13,7 +13,7 @@ app.use("/", pokemon);
 app.use("/", tipo);
 app.use("/", descripcion);
 app.use("/", estadisticas);
-app.use("/", movimientos);
+app.use("/", movimientos);  
 
 app.listen(8080, () =>
   console.log("Server listening in http://localhost:8080")

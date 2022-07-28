@@ -45,7 +45,6 @@ router.post("/register", async (req, res) => {
     res.json({ error: error });
   }
 });
-
 router.post("/login", postLogin);
 
 module.exports = router;

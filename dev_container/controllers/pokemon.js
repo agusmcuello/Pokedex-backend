@@ -68,16 +68,14 @@ exports.postNewPokemon = async (req, res) => {
     second_ability:req.body.second_ability,
     description: req.body.description,
     number:req.body.number,
+    icon: req.body.icon,
   };
 
   try {
-   const respuesta = await pool.query(
-      "INSERT INTO public.pokemon (name,color,type,type_two,type_two_color,weight,height,first_ability,second_ability,description,number) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
-      [newPokemon.name, newPokemon.color, newPokemon.type, newPokemon.type_two, newPokemon.type_two_color, newPokemon.weight, newPokemon.height, newPokemon.first_ability,newPokemon.second_ability,newPokemon.description,newPokemon.number]
+   const {rows:respuesta} = await pool.query(
+      "INSERT INTO public.pokemon (name,color,type,type_two,type_two_color,weight,height,first_ability,second_ability,description,number,icon) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) returning id",
+      [newPokemon.name, newPokemon.color, newPokemon.type, newPokemon.type_two, newPokemon.type_two_color, newPokemon.weight, newPokemon.height, newPokemon.first_ability,newPokemon.second_ability,newPokemon.description,newPokemon.number, newPokemon.icon]
     );
-    const ultimoDato = await pool.query(
-      "select MAX(id) from pokemon"
-    )
 
     const pokemonStats={
       id: newPokemon.number,
@@ -87,14 +85,14 @@ exports.postNewPokemon = async (req, res) => {
       satk:req.body.satk,
       sdef:req.body.sdef,
       spd:req.body.spd,
-      pokemon_id:ultimoDato.rows[0].max
+      pokemon_id:respuesta[0].id
     }
     await pool.query(
-      "INSERT INTO public.stats (id, hp, atk, def, satk, sdef, spd, pokemon_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",[newPokemon.number,pokemonStats.hp,pokemonStats.atk,pokemonStats.def,pokemonStats.satk,pokemonStats.sdef,pokemonStats.spd, ultimoDato.rows[0].max]
+      "INSERT INTO public.stats (id, hp, atk, def, satk, sdef, spd, pokemon_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",[newPokemon.number,pokemonStats.hp,pokemonStats.atk,pokemonStats.def,pokemonStats.satk,pokemonStats.sdef,pokemonStats.spd, respuesta[0].id]
     )
 
   
-    res.json({ success: true, newPokemon });
+    res.json({ success: true, newPokemon, pokemonStats });
   } catch (error) {
     res.json({ error: error });
   }
