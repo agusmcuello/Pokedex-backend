@@ -12,7 +12,7 @@ exports.getPokemon = async (req, res) => {
   const { nombrePokemon } = req.params;
 
   const { rows:listaPokemon } = await pool.query(
-    "select * from public.pokemon where pokemon.deleted = false order by pokemon.id"
+    "select * from public.pokemon where pokemon.deleted = false order by pokemon.number"
   );
   const { rows } = await pool.query(
     `select *, pokemon.id as id from public.pokemon join public.stats on stats.pokemon_id = pokemon.id where pokemon.deleted = false and lower(pokemon.name) = $1`,[nombrePokemon.toLowerCase()]
@@ -140,7 +140,7 @@ exports.verifyToken = (req, res, next) => {
     req.user = verified;
     next();
   } catch (error) {
-    res.status(400).json({ error: "el token no es válido" });
+    res.status(401).json({ error: "el token no es válido" });
   }
 };
 
@@ -150,7 +150,7 @@ exports.postLogin = async (req, res) => {
     [req.body.mail]
   );
   if (!rows[0]) {
-    return res.status(400).json({ error: "email no válida" });
+    return res.status(400).json({ error: "Invalid email" });
   }
 
   const validPassword = await bcrypt.compare(
@@ -158,7 +158,7 @@ exports.postLogin = async (req, res) => {
     rows[0].password
   );
   if (!validPassword) {
-    return res.status(400).json({ error: "contraseña no válida" });
+    return res.status(400).json({ error: "Incorrect password" });
   }
 
   const token = jwt.sign(

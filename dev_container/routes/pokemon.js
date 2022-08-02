@@ -22,9 +22,9 @@ const {
 
 router.get("/pokemon/:nombrePokemon", getPokemon);
 router.get("/pokemon", getAllPokemon);
-router.post("/agregarPokemon", postNewPokemon);
+router.post("/agregarPokemon", verifyToken, postNewPokemon);
 router.put("/modificarPokemon/:nombre", verifyToken, updatePokemon);
-router.delete("/borrarPokemon/:nombre", deletePokemon);
+router.delete("/borrarPokemon/:nombre", verifyToken, deletePokemon);
 router.post("/register", async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   const password = await bcrypt.hash(req.body.password, salt);
