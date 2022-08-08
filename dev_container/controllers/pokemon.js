@@ -156,7 +156,7 @@ exports.postLogin = async (req, res) => {
   const validPassword = await bcrypt.compare(
     req.body.password,
     rows[0].password
-  );
+  );  
   if (!validPassword) {
     return res.status(400).json({ error: "Incorrect password" });
   }
